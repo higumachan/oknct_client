@@ -1,0 +1,71 @@
+<html>
+
+<head>
+<title>OKNCT CLIENT</title>
+<script src="/static/js/jquery.js"></script>
+<script>
+	var max_id = "0";
+	var reg = new RegExp(/http:\/\/[\w.\/]*/);
+	function get_timeline(){
+		$.getJSON("/get_timeline", {"max_id": max_id}, function (json) {
+			var html = "";
+			var new_tweet = $("#timeline>p:first");
+			for (var i = 0; i < json.length; i++){
+				if (max_id < json[i].id){
+					max_id = json[i].id;
+				}
+				add_text = json[i].text.replace(reg, function(s1){
+					return ("<a target='_blank' href='" + s1 + "'>" + s1 + "</a>");
+				});
+				$("#timeline").prepend("<p style='display: none'>" + "<img onclick='reply(\"" + json[i].user + "\");' id='" + json[i].id + "' src=\"/image/" + json[i].user + "\"/>" + json[i].user + ">" + add_text + "<a onclick='fav(\"" + json[i].id + "\");'>★ </a>" + "<a onclick='rt(\"" + json[i].id + "\");'>RT</a>" + "</p>");
+			}
+			$("#timeline>p:hidden").fadeIn("slow");
+		});
+	}
+	get_timeline()
+	setInterval(get_timeline, 60 * 1000);
+	function tweet(){
+		var text = $("#text").val();
+		$("#text").val("");
+		
+		$.post("/post", {"text": text}, function (json) {
+			get_timeline();
+		});
+	}
+	function reply(name){
+		$("#text").val("@" + name);
+	}
+	function fav(id){
+		$.post("/fav", {"id": id}, function(json) {
+			alert(json);
+		});
+	}
+	function rt(id){
+		$.post("/retweet", {"id": id}, function(json) {
+			alert(json);
+		});
+	}
+</script>
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-30587080-2']);
+	  _gaq.push(['_trackPageview']);
+
+	    (function() {
+			    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+				    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+					    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+						  })();
+
+						  </script>
+</head>
+
+<body>
+	<textarea id="text" name="text" cols="40" rows="3"></textarea>
+	<input type="submit" value="投稿" onclick="tweet()"/>
+	<div id="timeline">
+	</div>
+</body>
+</html>
